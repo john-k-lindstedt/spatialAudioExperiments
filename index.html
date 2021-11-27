@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<!--
+States:
+- 0: input ID  (self-paced)
+- 1: instructions (self-paced)
+- 2: trial stimuli (auto)
+- 3: trial responses (self-paced)
+- 4: end (exit plz, make sure to log)
+
+typical path: 0-1-2-3-2-3-2-3-2-3-2-3-2-3-2-3-2-3-4
+
+
+only really needs:
+- text
+- likert inputs panel
+- button inputs panel
+- ID input box
+
+Dsecription of the panner node's features
+https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
+-->
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scenes Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <style>
+      body, html{
+        height: 100%;
+        margin: 0px;
+      }
+      #app{
+        height: 100%;
+        width: 100%;
+      }
+      .scene{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #111111;
+        color: #eeeeee;
+        font-size: 30pt;
+        width: 100%;
+        height: 100%;
+      }
+      .display{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 40pt;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+
+      <div class="scene">
+        <!-- ID prompt-->
+        <div class="UIDEntry" v-if="state=='ENTER_ID'">
+          <span>
+            Enter UID:
+          </span>
+          <input type="text" v-model="UID"></input>
+          <button @click="acceptID()">Submit</button>
+        </div>
+
+        <!-- stimulus display -->
+        <div class="stimulus" v-if="state=='INSTRUCT'">
+          <p v-for="line in instructions">
+            {{ line }}
+          </p>
+          <button @click="confirmInstructions()">Got it!</button>
+        </div>
+
+        <div class="stimulus" v-if="state=='TRIAL'">
+          <!-- audio? -->
+          <div class="audio" v-if="false">
+
+          </div>
+
+          <!-- effort q-->
+          <div class="sa" v-if="substate=='EF'">
+            <span class="efPrompt">
+              {{ effortPrompt }}
+            </span>
+            <div>
+              <button class="efAnswer"
+                v-for="(text, ix) in efAnswers">
+                {{text}}
+              </button>
+            </div>
+          </div>
+
+          <!-- MC qs-->
+          <div class="mc" v-if="substate=='MC'">
+            <span class="mcPrompt">
+              {{ mcPrompt }}
+            </span>
+            <button class="mcAnswer"
+              v-for="(text, ix) in mcAnswers">
+              {{text}}
+            </button>
+          </div>
+
+          <!-- SA qs-->
+          <div class="sa" v-if="substate=='SA'">
+            <span class="saPrompt">
+              {{ saPrompt }}
+            </span>
+            <textarea class="saAnswer">
+            </textarea>
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+
+    </div>
+
+    <script>
+
+      //globals
+
+
+      if (window.AudioContext === undefined) {
+        console.log("Browser cannot load audio.")
+        var actx = null
+      }
+      else {
+        var actx = new (window.AudioContext || window.webkitAudioContext);
+        actx.listener.setOrientation(0, 1, 0, 0, 0, 1)
+      }
+
+
+      //Classes
+      
+      class AudioNode {
+        constructor(file, angle){
+          this.panner = actx.createPanner()
+          this.panner.panningModel = "HRTF"
+          this.panner.distanceModel = "linear"
+          
+        
+        }
+      }
+
+      class Trial {
+        constructor(targetFile,distLFile,distRFile,angle,timeout,MCPrompt,MCChoices,MCCorrect){
+          
+          // setup prompt audio
+          this.promptText = "+"
+
+          //this.promptAudio = new Audio(promptFile)
+          //this.promptSource = actx.createMediaElementSource(this.promptAudio)
+
+          // setup target audio
+
+          this.targetPanner = actx.createPanner()
+          this.targetPanner.panningModel = "HRTF"
+          this.targetPanner.distanceModel = "linear"
+
+          this.targetX = 10 * Math.cos((-90) * Math.PI / 180)
+          this.targetY = 10 * Math.sin((-90) * Math.PI / 180)
+          this.targetPanner.setPosition(this.targetX,this.targetY,0)
+
+          this.targetAudio = new Audio(targetFile)
+          this.targetAudio.loop = true
+          this.targetSource = actx.createMediaElementSource(this.targetAudio)
+          this.targetSource.connect(this.targetPanner)
+
+          // setup left distractor audio
+
+          this.distLPanner = actx.createPanner()
+          this.distLPanner.panningModel = "HRTF"
+          this.distLPanner.distanceModel = "linear"
+
+          this.distLX = 10 * Math.cos((-angle - 90) * Math.PI / 180)
+          this.distLY = 10 * Math.sin((-angle - 90) * Math.PI / 180)
+          this.distLPanner.setPosition(this.distLX,this.distLY,0)
+
+          this.distLAudio = new Audio(distLFile)
+          this.distLAudio.loop = true
+          this.distLSource = actx.createMediaElementSource(this.distLAudio)
+          this.distLSource.connect(this.distLPanner)
+
+          // setup right distractor audio
+
+          this.distRPanner = actx.createPanner()
+          this.distRPanner.panningModel = "HRTF"
+          this.distRPanner.distanceModel = "linear"
+
+          this.distRX = 10 * Math.cos((angle - 90) * Math.PI / 180)
+          this.distRY = 10 * Math.sin((angle - 90) * Math.PI / 180)
+          this.distRPanner.setPosition(this.distRX,this.distRY,0)
+
+          this.distRAudio = new Audio(distRFile)
+          this.distRAudio.loop = true
+          this.distRSource = actx.createMediaElementSource(this.distRAudio)
+          this.distRSource.connect(this.distRPanner)
+
+          //prep stress likert
+          this.stressText = "How hard was it to track the target voice?"
+
+          this.stressResponse = null
+
+
+          //prep multiple choice question
+
+          this.MCText = ""
+          this.MCChoices = ["","","",""]
+          this.MCCorrect = -1
+
+          this.MCResponse = null
+          this.MCResponseTime = -1
+          this.MCCorrect = null
+        }
+        
+        startTrial(){
+          //do the first action-- probably displaying the fixation cross, and playing the promptID
+          //then set the timeout for the NEXT action (playing the trial audio proper)
+        }
+        
+        playPrompt(){
+          this.promptSource.connect(actx.destination)
+          this.promptAudio.play()
+
+          //when should I disconnect...?
+        }
+
+        playTrial(){
+          this.targetPanner.connect(actx.destination)
+          this.distLPanner.connect(actx.destination)
+          this.distRPanner.connect(actx.destination)
+
+          this.targetAudio.play()
+          this.distLAudio.play()
+          this.distRAudio.play()
+          
+          //after starting, set a timeout for "stopAll()"
+          //  but ALSO for "advance to effortPrompt"
+        }
+
+        stopAll(){
+          //this.promptAudio.pause()
+          //this.promptAudio.currentTime = 0
+
+          this.targetAudio.pause()
+          this.targetAudio.currentTime = 0
+
+          this.distLAudio.pause()
+          this.distLAudio.currentTime = 0
+
+          this.distRAudio.pause()
+          this.distRAudio.currentTime = 0
+        }
+
+      }
+
+      var audio_files = [
+        "file1.ogg",
+        "file2.ogg"
+      ]
+
+      var trials = [
+
+      ]
+
+
+
+      app = new Vue({
+        el: "#app",
+        startTime: -1,
+        data:{
+          state: "ENTER_ID",
+          substate: "",
+          trial_id: 0,
+          trials: [
+          ],
+          UID: "",
+          UIDEntered: false,
+          log: [],
+          stimulus: "",
+          mcPrompt: "",
+          saPrompt: "",
+          efPrompt: "How would you rate the difficulty of this trial?",
+          efAnswers: ["0","1","2","3","4","5","6","7","8","9"],
+          mcAnswers: ["A","B","C","D"],
+          instructions: [
+            "Try to listen closely to the audio in each trial to come.",
+            "Focus on the CENTER voice.",
+            "After listening for a few seconds, we'll ask you some comprehension questions."
+          ]
+        },
+        created() {
+          this.listenerSetup()
+          this.startTime = new Date().getTime();
+        },
+        mounted() {
+          //this.loadAudio();
+        },
+        methods: {
+          listenerSetup(){
+            window.addEventListener('keydown', (e) => {
+              this.logEvent("keypress",e.key)
+              if (e.key == 'ArrowLeft') {
+                this.decrement();
+              }
+              if (e.key == 'ArrowRight') {
+                this.increment();
+              }
+            });
+          },
+          acceptID(){
+            this.state = "INSTRUCT"
+          },
+          confirmInstructions(){
+            this.state = "TRIAL"
+            //initiate the first trial in the list 
+          },
+          initializeAudio(){
+            this.trialtest = new Trial()
+
+          },
+          
+          setupLog(){
+            
+          },
+          
+          logEvent(type, value){
+            console.log(type,value)
+            //also need to open up a local file to write this stuff to 
+              //depending on how often the system lets us write / keep open file 
+              //we may need to save a bunch of files (e.g., one per trial)
+            
+          },
+          buildTrials(){
+            //read the trial definitions from a log using JSON 
+            //build each one of the Trial() objects based on those logs
+          }
+        }
+
+      })
+
+
+    </script>
+  </body>
+</html>
