@@ -1,0 +1,40 @@
+[
+    {
+        "trial_id": 1,
+        "targetFile": "Ants_15.ogg",
+        "distLFile": "Crow_15.ogg",
+        "distRFile": "Gnat_15.ogg",
+        "angle": 0,
+        "timeout": 0,
+        "mcPrompt": "This paragraph best supports the statement that",
+        "mcChoices": ["onions and bay leaves go well with clams.", 
+            "clam chowder is very nutritious.", 
+            "Shakespeare’s characters are more interesting than fictional characters today.",
+            "people today are interested in Shakespeare’s work because of the characters.",
+            "critical reading is a slow, dull, but essential process.",
+            "critical reading should take place at the same time each day.",
+            "toxic insecticides such as DDT have not been banned throughout the world.",
+            "legal authorization."
+        ],
+        "mcCorrect": "onions and bay leaves go well with clams."
+    },
+    {
+        "trial_id": 2,
+        "targetFile": "Ants_15.ogg",
+        "distLFile": "Crow_15.ogg",
+        "distRFile": "Gnat_15.ogg",
+        "angle": 0,
+        "timeout": 0,
+        "mcPrompt": "This paragraph best supports the statement that",
+        "mcChoices": ["onions and bay leaves go well with clams.", 
+            "clam chowder is very nutritious.", 
+            "Shakespeare’s characters are more interesting than fictional characters today.",
+            "people today are interested in Shakespeare’s work because of the characters.",
+            "critical reading is a slow, dull, but essential process.",
+            "critical reading should take place at the same time each day.",
+            "toxic insecticides such as DDT have not been banned throughout the world.",
+            "legal authorization."
+        ],
+        "mcCorrect": "onions and bay leaves go well with clams."
+    }
+]
