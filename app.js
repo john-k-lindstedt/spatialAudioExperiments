@@ -19,10 +19,16 @@ if (window.AudioContext === undefined) {
   }
 
   class Trial {
-    constructor(targetFile,distLFile,distRFile,angle,timeout,MCPrompt,MCChoices,MCCorrect){
+    constructor(trialNum, trialID, targetFile,distLFile,distRFile,angle,timeout,MCPrompt,MCChoices,MCCorrect){
       
       // setup prompt audio
       this.promptText = "+"
+      this.angle = angle
+
+      this.trialID = trialID
+      this.trialNum = trialNum
+
+      this.targetFile = targetFile
 
       //this.promptAudio = new Audio(promptFile)
       //this.promptSource = actx.createMediaElementSource(this.promptAudio)
@@ -74,9 +80,10 @@ if (window.AudioContext === undefined) {
 
       //prep stress likert
       this.stressText = "How hard was it to track the target voice?"
+      this.efReponse = null
 
-      this.stressResponse = null
-
+      this.efStartTime = -1
+      this.efResponseTime = -1
 
       //prep multiple choice question
       this.MCText = MCPrompt
@@ -84,23 +91,41 @@ if (window.AudioContext === undefined) {
       this.MCCorrect = MCCorrect
 
       this.MCResponse = null
+      this.MCStartTime = -1
       this.MCResponseTime = -1
-      this.MCCorrect = null
+
+      this.trialLog = {}
     }
     
     startTrial(){
       //do the first action-- probably displaying the fixation cross, and playing the promptID
+      this.playPrompt()
+      
+      // init certain data in app
+      app.mcPrompt = this.MCText
+      app.mcChoices = this.MCChoices
+
       //then set the timeout for the NEXT action (playing the trial audio proper)
     }
     
     playPrompt(){
-      this.promptSource.connect(actx.destination)
-      this.promptAudio.play()
-
+      app.substate = "PROMPT"
+      // this.promptSource.connect(actx.destination)
+      // this.promptAudio.play()
+      
       //when should I disconnect...?
+      setTimeout(() => { this.stopPrompt(); }, 1000);
+    }
+
+    stopPrompt() {
+      // this.promptAudio.pause()
+      // this.promptAudio.currentTime = 0
+      this.playTrial()
     }
 
     playTrial(){
+      app.substate = "AUDIO"
+
       this.targetPanner.connect(actx.destination)
       this.distLPanner.connect(actx.destination)
       this.distRPanner.connect(actx.destination)
@@ -110,9 +135,12 @@ if (window.AudioContext === undefined) {
       this.distRAudio.play()
       
       //after starting, set a timeout for "stopAll()"
-      
-
-      //  but ALSO for "advance to effortPrompt"
+      setTimeout(() => { 
+        this.stopAll(); 
+        //but ALSO for "advance to effortPrompt"
+        this.efStartTime = new Date().getTime();
+        app.substate = "EF"
+      }, 3000);
     }
     
     stopAll(){
@@ -129,6 +157,22 @@ if (window.AudioContext === undefined) {
       this.distRAudio.currentTime = 0
     }
 
+    logTrial() {
+      app.log["trials"].push({
+        "timestamp": Math.floor(Date.now() / 1000),
+        "trialNum": this.trialNum,
+        "stimulusId": this.trialID,
+        "angle": this.angle,
+        "target_file": this.targetFile,
+        "mc_choice": this.MCResponse,
+        "ef_rate": this.efReponse,
+        "ef_react": this.efResponseTime,
+        "mc_correct": this.MCCorrect,
+        "mc_react": this.MCResponseTime,
+        }
+      )
+      window.localStorage.setItem('log', app.log);
+    }
   }
 
   var audio_files = [
@@ -136,9 +180,7 @@ if (window.AudioContext === undefined) {
     "file2.ogg"
   ]
 
-  var trials = [
-
-  ]
+  var trials = []
 
   app = new Vue({
     el: "#app",
@@ -151,11 +193,10 @@ if (window.AudioContext === undefined) {
       current_trial: null,
       UID: "",
       UIDEntered: false,
-      log: [],
+      log: null,
       stimulus: "",
       mcPrompt: "",
-      saPrompt: "",
-      efPrompt: "How would you rate the difficulty of this trial?",
+      trialNum: 0,
       efAnswers: ["0","1","2","3","4","5","6","7","8","9"],
       mcChoices: [],
       instructions: [
@@ -165,7 +206,7 @@ if (window.AudioContext === undefined) {
       ]
     },
     created() {
-      this.listenerSetup()
+      // this.listenerSetup()
       this.startTime = new Date().getTime();
     },
     mounted() {
@@ -187,67 +228,52 @@ if (window.AudioContext === undefined) {
 
       acceptID(){
         this.state = "INSTRUCT"
-      },
-
-      efAssessment() {
-        this.current_trial.stopAll()
-        this.substate = "EF"
+        this.setupLog()
       },
 
       efDone(answer) {
-        this.mcPrompt = this.current_trial.MCText
-        this.mcChoices = this.current_trial.MCChoices
-        this.logEvent("Effort assessment", answer)
+        this.current_trial.efResponseTime = new Date().getTime() - this.current_trial.efStartTime; 
+        this.current_trial.efReponse = answer
+
+        this.current_trial.MCStartTime = new Date().getTime(); 
         this.substate = "MC"
       },
 
       mcDone(answer) {
-        this.logEvent("Effort assessment", answer)
-        this.initializeAudio()
+        this.current_trial.MCResponseTime = new Date().getTime() - this.current_trial.MCStartTime;
+        this.current_trial.MCResponse = answer
+        this.nextTrial()
       },
 
       confirmInstructions(){
         // initiate the first trial in the list 
-        this.initializeAudio()
+        this.state = "TRIAL"
+        this.nextTrial()
       },
 
-      initializeAudio(){    
+      nextTrial(){   
         if (this.trials.length > 0) {
-            this.state = "TRIAL"
-            this.substate = "AUDIO"
-            this.current_trial = this.trials.shift()
-            this.current_trial.playTrial()
-            setTimeout(() => { this.efAssessment(); }, 3000);
+          this.trialNum += 1 
+          this.current_trial = this.trials.shift()
+          this.current_trial.startTrial()
         } else {
-            this.state = "END"
-        }  
+          this.state = "END"
+          this.current_trial.logTrial()
+          console.log(this.log)
+          this.saveTextfile("log.txt")
+        }
+      },
+
+      saveTextfile(filename) {
+        let dummy = document.createElement('a');
+        dummy.download = filename;
+        dummy.href = 'data:text/plain;charset=utf-8,' + JSON.stringify(this.log,null,2);
+        dummy.click();
       },
       
-      setupLog(){
-
-      },
-      
-      logEvent(type, value){
-        console.log(type,value)
-
-        //also need to open up a local file to write this stuff to 
-          //depending on how often the system lets us write / keep open file 
-          //we may need to save a bunch of files (e.g., one per trial)
-
-        // const data = JSON.stringify({type, value})
-        // const blob = new Blob([data], {type: 'text/plain'})
-        // const e = document.createEvent('Event');
-        // a = document.createElement('a');
-        // a.download = "test.json";
-        // a.href = window.URL.createObjectURL(blob);
-        // a.dataset.downloadurl = ['text/json', a.download, a.href].join(':');
-
-        // a.addEventListener('build', function (e) {
-        //     // e.target matches elem
-
-        //   }, false);
-        // a.Event('click', true, true);
-        // a.dispatchEvent(e);
+      setupLog() {
+        this.log = {"UID": this.UID, "trials": []}
+        window.localStorage.setItem('log', this.log);
       },
 
       readJson(){
@@ -260,10 +286,11 @@ if (window.AudioContext === undefined) {
         //read the trial definitions from a log using JSON 
         //build each one of the Trial() objects based on those logs
         var trial; 
-        for (i = 0; i < data.length; i++) {
+        for (i = 0; i < 1; i++) {
           console.log(data[i])
           curr_data = data[i];
 
+          trial_id = curr_data["trial_id"];
           targetFile = curr_data["targetFile"];
           distLFile = curr_data["distLFile"];
           distRFile = curr_data["distRFile"];
@@ -273,7 +300,7 @@ if (window.AudioContext === undefined) {
           mcChoices = curr_data["mcChoices"];
           mcCorrect = curr_data["mcCorrect"];
 
-          trial = new Trial(targetFile, distLFile, distRFile, angle, timeout, mcPrompt, mcChoices, mcCorrect)
+          trial = new Trial(trial_id, i + 1, targetFile, distLFile, distRFile, angle, timeout, mcPrompt, mcChoices, mcCorrect)
           this.trials.push(trial)
         }
     

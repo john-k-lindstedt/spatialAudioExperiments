@@ -52,6 +52,13 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
         align-items: center;
         font-size: 40pt;
       }
+      .mcAnswer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+        font-size: 10pt;
+      }
     </style>
   </head>
   <body>
@@ -77,6 +84,11 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
 
         <div class="stimulus" v-if="state=='TRIAL'">
           <!-- audio? -->
+          <!-- <img src="fixationcross.png"> </img> -->
+
+          <div class="prompt" v-if="substate=='PROMPT'">
+            <img src="fixationcross.png"> </img>
+          </div>
 
           <div class="audio" v-if="false" v-if="substate=='AUDIO'">
 
@@ -85,7 +97,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
           <!-- effort q-->
           <div class="sa" v-if="substate=='EF'">
             <span class="efPrompt">
-              {{ efPrompt }}
+              How would you rate the difficulty of this trial?
             </span>
             <div>
               <button class="efAnswer"
@@ -107,16 +119,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
               {{text}}
             </button>
           </div>
-
-          <!-- SA qs-->
-          <div class="sa" v-if="substate=='SA'">
-            <span class="saPrompt">
-              {{ saPrompt }}
-            </span>
-            <textarea class="saAnswer">
-            </textarea>
-          </div>
-
 
         </div>
 
