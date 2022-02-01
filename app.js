@@ -19,7 +19,7 @@ if (window.AudioContext === undefined) {
   }
 
   class Trial {
-    constructor(trialNum, trialID, targetFile,distLFile,distRFile,angle,timeout,MCPrompt,MCChoices,MCCorrect){
+    constructor(trialNum, trialID, targetFile,distLFile,distRFile,promptFile,angle,timeout,MCPrompt,MCChoices,MCCorrect, app){
       
       // setup prompt audio
       this.promptText = "+"
@@ -29,12 +29,16 @@ if (window.AudioContext === undefined) {
       this.trialNum = trialNum
 
       this.targetFile = targetFile
+      this.app = app
 
       //this.promptAudio = new Audio(promptFile)
-      //this.promptSource = actx.createMediaElementSource(this.promptAudio)
+
+      // set up prompt audio
+      this.promptAudio = new Audio(promptFile)
+      this.promptAudio.loop = true
+      this.promptSource = actx.createMediaElementSource(this.promptAudio)
 
       // setup target audio
-
       this.targetPanner = actx.createPanner()
       this.targetPanner.panningModel = "HRTF"
       this.targetPanner.distanceModel = "linear"
@@ -102,29 +106,29 @@ if (window.AudioContext === undefined) {
       this.playPrompt()
       
       // init certain data in app
-      app.mcPrompt = this.MCText
-      app.mcChoices = this.MCChoices
+      this.app.mcPrompt = this.MCText
+      this.app.mcChoices = this.MCChoices
 
       //then set the timeout for the NEXT action (playing the trial audio proper)
     }
     
-    playPrompt(){
-      app.substate = "PROMPT"
-      // this.promptSource.connect(actx.destination)
-      // this.promptAudio.play()
+    playPrompt() {
+      this.app.substate = "PROMPT"
+      this.promptSource.connect(actx.destination)
+      this.promptAudio.play()
       
       //when should I disconnect...?
       setTimeout(() => { this.stopPrompt(); }, 1000);
     }
 
     stopPrompt() {
-      // this.promptAudio.pause()
-      // this.promptAudio.currentTime = 0
+      this.promptAudio.pause()
+      this.promptAudio.currentTime = 0
       this.playTrial()
     }
 
     playTrial(){
-      app.substate = "AUDIO"
+      this.app.substate = "AUDIO"
 
       this.targetPanner.connect(actx.destination)
       this.distLPanner.connect(actx.destination)
@@ -139,14 +143,11 @@ if (window.AudioContext === undefined) {
         this.stopAll(); 
         //but ALSO for "advance to effortPrompt"
         this.efStartTime = new Date().getTime();
-        app.substate = "EF"
+        this.app.substate = "EF"
       }, 3000);
     }
     
     stopAll(){
-      //this.promptAudio.pause()
-      //this.promptAudio.currentTime = 0
-
       this.targetAudio.pause()
       this.targetAudio.currentTime = 0
 
@@ -158,7 +159,7 @@ if (window.AudioContext === undefined) {
     }
 
     logTrial() {
-      app.log["trials"].push({
+      this.app.log["trials"].push({
         "timestamp": Math.floor(Date.now() / 1000),
         "trialNum": this.trialNum,
         "stimulusId": this.trialID,
@@ -171,7 +172,7 @@ if (window.AudioContext === undefined) {
         "mc_react": this.MCResponseTime,
         }
       )
-      window.localStorage.setItem('log', app.log);
+      window.localStorage.setItem('log', this.app.log);
     }
   }
 
@@ -206,7 +207,7 @@ if (window.AudioContext === undefined) {
       ]
     },
     created() {
-      // this.listenerSetup()
+      //this.listenerSetup()
       this.startTime = new Date().getTime();
     },
     mounted() {
@@ -286,7 +287,7 @@ if (window.AudioContext === undefined) {
         //read the trial definitions from a log using JSON 
         //build each one of the Trial() objects based on those logs
         var trial; 
-        for (i = 0; i < 1; i++) {
+        for (i = 0; data.length; i++) {
           console.log(data[i])
           curr_data = data[i];
 
@@ -294,13 +295,14 @@ if (window.AudioContext === undefined) {
           targetFile = curr_data["targetFile"];
           distLFile = curr_data["distLFile"];
           distRFile = curr_data["distRFile"];
+          promptFile = curr_data["promptFile"];
           angle = curr_data["angle"];
           timeout = curr_data["timeout"];
           mcPrompt = curr_data["mcPrompt"];
           mcChoices = curr_data["mcChoices"];
           mcCorrect = curr_data["mcCorrect"];
 
-          trial = new Trial(trial_id, i + 1, targetFile, distLFile, distRFile, angle, timeout, mcPrompt, mcChoices, mcCorrect)
+          trial = new Trial(trial_id, i + 1, targetFile, distLFile, distRFile, promptFile, angle, timeout, mcPrompt, mcChoices, mcCorrect, this)
           this.trials.push(trial)
         }
     
