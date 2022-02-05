@@ -85,9 +85,9 @@ if (window.AudioContext === undefined) {
       //prep stress likert
       this.stressText = "How hard was it to track the target voice?"
       this.efReponse = null
-
       this.efStartTime = -1
       this.efResponseTime = -1
+      this.efTimeSinceExpStarted = -1
 
       //prep multiple choice question
       this.MCText = MCPrompt
@@ -97,6 +97,7 @@ if (window.AudioContext === undefined) {
       this.MCResponse = null
       this.MCStartTime = -1
       this.MCResponseTime = -1
+      this.MCTimeSinceExpStarted = -1
 
       this.trialLog = {}
     }
@@ -165,23 +166,18 @@ if (window.AudioContext === undefined) {
         "stimulusId": this.trialID,
         "angle": this.angle,
         "target_file": this.targetFile,
-        "mc_choice": this.MCResponse,
         "ef_rate": this.efReponse,
         "ef_react": this.efResponseTime,
-        "mc_correct": this.MCCorrect,
+        "ef_time_since_exp_started": this.efTimeSinceExpStarted,
+        "mc_choice": this.MCResponse,
         "mc_react": this.MCResponseTime,
+        "mc_time_since_exp_started": this.MCTimeSinceExpStarted,
+        "mc_correct": this.MCCorrect,
         }
       )
-      window.localStorage.setItem('log', this.app.log);
+      window.localStorage.setItem('log', JSON.stringify(this.app.log));
     }
   }
-
-  var audio_files = [
-    "file1.ogg",
-    "file2.ogg"
-  ]
-
-  var trials = []
 
   app = new Vue({
     el: "#app",
@@ -215,17 +211,17 @@ if (window.AudioContext === undefined) {
       this.readJson();
     },
     methods: {
-      listenerSetup(){
-        window.addEventListener('keydown', (e) => {
-          this.logEvent("keypress",e.key)
-          if (e.key == 'ArrowLeft') {
-            this.decrement();
-          }
-          if (e.key == 'ArrowRight') {
-            this.increment();
-          }
-        });
-      },
+      // listenerSetup(){
+      //   window.addEventListener('keydown', (e) => {
+      //     this.logEvent("keypress",e.key)
+      //     if (e.key == 'ArrowLeft') {
+      //       this.decrement();
+      //     }
+      //     if (e.key == 'ArrowRight') {
+      //       this.increment();
+      //     }
+      //   });
+      // },
 
       acceptID(){
         this.state = "INSTRUCT"
@@ -233,7 +229,9 @@ if (window.AudioContext === undefined) {
       },
 
       efDone(answer) {
-        this.current_trial.efResponseTime = new Date().getTime() - this.current_trial.efStartTime; 
+        let time = new Date().getTime();
+        this.current_trial.efResponseTime = time - this.current_trial.efStartTime;
+        this.current_trial.efTimeSinceExpStarted = time - this.startTime;
         this.current_trial.efReponse = answer
 
         this.current_trial.MCStartTime = new Date().getTime(); 
@@ -241,8 +239,12 @@ if (window.AudioContext === undefined) {
       },
 
       mcDone(answer) {
-        this.current_trial.MCResponseTime = new Date().getTime() - this.current_trial.MCStartTime;
+        let time = new Date().getTime();
+        this.current_trial.MCResponseTime = time - this.current_trial.MCStartTime;
+        this.current_trial.MCTimeSinceExpStarted = time - this.startTime;
         this.current_trial.MCResponse = answer
+
+        this.current_trial.logTrial()
         this.nextTrial()
       },
 
@@ -259,22 +261,24 @@ if (window.AudioContext === undefined) {
           this.current_trial.startTrial()
         } else {
           this.state = "END"
-          this.current_trial.logTrial()
-          console.log(this.log)
-          this.saveTextfile("log.txt")
+          let date = new Date();
+          let dateLabel = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDay() + "-" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds();
+          let fileName = dateLabel + "_" + this.UID + "_" + "log.txt";
+          this.saveTextfile(fileName)
         }
       },
 
       saveTextfile(filename) {
         let dummy = document.createElement('a');
         dummy.download = filename;
-        dummy.href = 'data:text/plain;charset=utf-8,' + JSON.stringify(this.log,null,2);
+        let log = JSON.parse(window.localStorage.getItem("log"))
+        dummy.href = 'data:text/plain;charset=utf-8,' + JSON.stringify(log,null,2);
         dummy.click();
       },
       
       setupLog() {
         this.log = {"UID": this.UID, "trials": []}
-        window.localStorage.setItem('log', this.log);
+        window.localStorage.setItem('log', JSON.stringify(this.log));
       },
 
       readJson(){
@@ -284,8 +288,6 @@ if (window.AudioContext === undefined) {
       },
 
       buildTrials(data){
-        //read the trial definitions from a log using JSON 
-        //build each one of the Trial() objects based on those logs
         var trial; 
         for (i = 0; data.length; i++) {
           console.log(data[i])
