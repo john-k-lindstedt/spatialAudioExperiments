@@ -109,7 +109,6 @@ if (window.AudioContext === undefined) {
       // init certain data in app
       this.app.mcPrompt = this.MCText
       this.app.mcChoices = this.MCChoices
-
       //then set the timeout for the NEXT action (playing the trial audio proper)
     }
     
@@ -289,7 +288,7 @@ if (window.AudioContext === undefined) {
 
       buildTrials(data){
         var trial; 
-        for (i = 0; data.length; i++) {
+        for (i = 0; i < data.length; i++) {
           console.log(data[i])
           curr_data = data[i];
 
