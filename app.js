@@ -1,4 +1,5 @@
 // globals
+
 if (window.AudioContext === undefined) {
     console.log("Browser cannot load audio.")
     var actx = null
@@ -8,30 +9,20 @@ if (window.AudioContext === undefined) {
     actx.listener.setOrientation(0, 1, 0, 0, 0, 1)
   }
 
-  //Classes
-  
-  class AudioNode {
-    constructor(file, angle){
-      this.panner = actx.createPanner()
-      this.panner.panningModel = "HRTF"
-      this.panner.distanceModel = "linear"
-    }
-  }
-
   class Trial {
-    constructor(trialNum, trialID, targetFile,distLFile,distRFile,promptFile,angle,timeout,MCPrompt,MCChoices,MCCorrect, app){
+    constructor(trialID,targetFile,distLFile,distRFile,promptFile,angle,timeout,MCPrompt,MCChoices,app){
       
-      // setup prompt audio
-      this.promptText = "+"
-      this.angle = angle
-
+      // setting instance variables
       this.trialID = trialID
-      this.trialNum = trialNum
-
       this.targetFile = targetFile
+      this.distLFile = distLFile
+      this.distRFile = distRFile
+      this.promptFile = promptFile
+      this.angle = angle
+      this.timeout = timeout * 1000
+      this.MCPrompt = MCPrompt
+      this.MCChoices = MCChoices
       this.app = app
-
-      //this.promptAudio = new Audio(promptFile)
 
       // set up prompt audio
       this.promptAudio = new Audio(promptFile)
@@ -53,7 +44,6 @@ if (window.AudioContext === undefined) {
       this.targetSource.connect(this.targetPanner)
 
       // setup left distractor audio
-
       this.distLPanner = actx.createPanner()
       this.distLPanner.panningModel = "HRTF"
       this.distLPanner.distanceModel = "linear"
@@ -68,7 +58,6 @@ if (window.AudioContext === undefined) {
       this.distLSource.connect(this.distLPanner)
 
       // setup right distractor audio
-
       this.distRPanner = actx.createPanner()
       this.distRPanner.panningModel = "HRTF"
       this.distRPanner.distanceModel = "linear"
@@ -89,17 +78,10 @@ if (window.AudioContext === undefined) {
       this.efResponseTime = -1
       this.efTimeSinceExpStarted = -1
 
-      //prep multiple choice question
-      this.MCText = MCPrompt
-      this.MCChoices = MCChoices
-      this.MCCorrect = MCCorrect
-
       this.MCResponse = null
       this.MCStartTime = -1
       this.MCResponseTime = -1
       this.MCTimeSinceExpStarted = -1
-
-      this.trialLog = {}
     }
     
     startTrial(){
@@ -107,7 +89,7 @@ if (window.AudioContext === undefined) {
       this.playPrompt()
       
       // init certain data in app
-      this.app.mcPrompt = this.MCText
+      this.app.mcPrompt = this.MCPrompt
       this.app.mcChoices = this.MCChoices
       //then set the timeout for the NEXT action (playing the trial audio proper)
     }
@@ -115,6 +97,7 @@ if (window.AudioContext === undefined) {
     playPrompt() {
       this.app.substate = "PROMPT"
       this.promptSource.connect(actx.destination)
+      
       this.promptAudio.play()
       
       //when should I disconnect...?
@@ -144,7 +127,7 @@ if (window.AudioContext === undefined) {
         //but ALSO for "advance to effortPrompt"
         this.efStartTime = new Date().getTime();
         this.app.substate = "EF"
-      }, 3000);
+      }, this.timeout);
     }
     
     stopAll(){
@@ -171,7 +154,6 @@ if (window.AudioContext === undefined) {
         "mc_choice": this.MCResponse,
         "mc_react": this.MCResponseTime,
         "mc_time_since_exp_started": this.MCTimeSinceExpStarted,
-        "mc_correct": this.MCCorrect,
         }
       )
       window.localStorage.setItem('log', JSON.stringify(this.app.log));
@@ -201,30 +183,27 @@ if (window.AudioContext === undefined) {
         "After listening for a few seconds, we'll ask you some comprehension questions."
       ]
     },
+
     created() {
-      //this.listenerSetup()
       this.startTime = new Date().getTime();
     },
-    mounted() {
-      //this.loadAudio();
-      this.readJson();
-    },
-    methods: {
-      // listenerSetup(){
-      //   window.addEventListener('keydown', (e) => {
-      //     this.logEvent("keypress",e.key)
-      //     if (e.key == 'ArrowLeft') {
-      //       this.decrement();
-      //     }
-      //     if (e.key == 'ArrowRight') {
-      //       this.increment();
-      //     }
-      //   });
-      // },
 
-      acceptID(){
+    mounted() {
+      this.readTsv();
+    },
+    
+    methods: {
+
+    // ----- STATE TRANSITIONS ---- //
+      acceptID() {
         this.state = "INSTRUCT"
         this.setupLog()
+      },
+
+      confirmInstructions(){
+        // initiate the first trial in the list 
+        this.state = "TRIAL"
+        this.nextTrial()
       },
 
       efDone(answer) {
@@ -247,16 +226,13 @@ if (window.AudioContext === undefined) {
         this.nextTrial()
       },
 
-      confirmInstructions(){
-        // initiate the first trial in the list 
-        this.state = "TRIAL"
-        this.nextTrial()
-      },
+    // ----- STARTING TRIALS ---- //
 
       nextTrial(){   
         if (this.trials.length > 0) {
           this.trialNum += 1 
           this.current_trial = this.trials.shift()
+          console.log(this.current_trial.targetFile)
           this.current_trial.startTrial()
         } else {
           this.state = "END"
@@ -267,47 +243,109 @@ if (window.AudioContext === undefined) {
         }
       },
 
-      saveTextfile(filename) {
-        let dummy = document.createElement('a');
-        dummy.download = filename;
-        let log = JSON.parse(window.localStorage.getItem("log"))
-        dummy.href = 'data:text/plain;charset=utf-8,' + JSON.stringify(log,null,2);
-        dummy.click();
-      },
-      
+    // ----- SETTING UP LOG ---- //
+
       setupLog() {
         this.log = {"UID": this.UID, "trials": []}
         window.localStorage.setItem('log', JSON.stringify(this.log));
       },
 
-      readJson(){
-        fetch('./trials.json')
-          .then(response => response.json())
-          .then(data => this.buildTrials(data));
+      saveTextfile(filename) {
+        let log = JSON.parse(window.localStorage.getItem("log"))
+        const blob = new Blob([JSON.stringify(log, null, 2)], {type : 'plain/text'});
+        blobURL = URL.createObjectURL(blob);
+        var href = document.createElement("a");
+        href.href = blobURL;
+        href.download = filename;
+        href.click();
+      },
+      
+    // ----- READING EXPERIMENT DEFINITION ---- //
+
+      readTsv() {
+        fetch('experiment_def.tsv')
+          .then(response => response.text())
+          .then(data => {
+            this.parseTsv(data)
+          });
       },
 
-      buildTrials(data){
-        var trial; 
-        for (i = 0; i < data.length; i++) {
-          console.log(data[i])
+      parseTsv(data) {
+        var x = data.split('\n');
+        for (var i=0; i<x.length; i++) {
+            y = x[i].split('\t');
+            x[i] = y;
+        }
+        console.log(x);
+        // need to build trials using x
+        this.buildTrials(x);
+      },
+
+      buildTrials(data) {
+        for (var i = 1; i < data.length; i++) {
           curr_data = data[i];
 
-          trial_id = curr_data["trial_id"];
-          targetFile = curr_data["targetFile"];
-          distLFile = curr_data["distLFile"];
-          distRFile = curr_data["distRFile"];
-          promptFile = curr_data["promptFile"];
-          angle = curr_data["angle"];
-          timeout = curr_data["timeout"];
-          mcPrompt = curr_data["mcPrompt"];
-          mcChoices = curr_data["mcChoices"];
-          mcCorrect = curr_data["mcCorrect"];
+          // getting all data from tsv
+          trial_id = curr_data[0];
+          talker_id = curr_data[1];
+          target_audio_num = curr_data[2];
+          distL_audio_num = curr_data[3];
+          distR_audio_num = curr_data[4];
+          angle = curr_data[5];
+          duration = parseInt(curr_data[6]);
+          prompt_text = curr_data[7];
+          mc_choices = [curr_data[8], curr_data[9], curr_data[10], curr_data[11]]
 
-          trial = new Trial(trial_id, i + 1, targetFile, distLFile, distRFile, promptFile, angle, timeout, mcPrompt, mcChoices, mcCorrect, this)
+          // converting to audio files
+          target_audio_file = this.getAudioFile(target_audio_num)
+          distL_audio_file = this.getAudioFile(distL_audio_num)
+          distR_audio_file = this.getAudioFile(distR_audio_num)
+
+          var trial = new Trial(trial_id, target_audio_file, distL_audio_file, distR_audio_file, "audioFiles/p54_emw.ogg", angle, duration, prompt_text, this.shuffle(mc_choices), this)
           this.trials.push(trial)
         }
-    
+        // randomize trials 
+        this.shuffle(this.trials)
+      }, 
+
+
+    // ----- HELPER FUNCTIONS ----- // 
+
+      shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+      
+        // While there remain elements to shuffle...
+        while (currentIndex != 0) {
+      
+          // Pick a remaining element...
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+      
+          // And swap it with the current element.
+          [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+        }
+      
+        return array;
+      },
+
+      getAudioFile(audio_num) {
+        let num_string = audio_num.substring(1);
+        let num_int = parseInt(num_string);
+
+        let audio_file = "audioFiles/" + audio_num;
+
+        if (num_int <= 20) {
+          audio_file += "_" + "jkl" + ".ogg"
+        } else if (num_int <= 40) {
+          audio_file += "_" + "alc" + ".ogg"
+        } else {
+          audio_file += "_" + "emw" + ".ogg"
+        }
+
+        return audio_file;
       }
+      
     }
 
   })
