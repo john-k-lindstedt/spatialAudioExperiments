@@ -26,64 +26,33 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
   <head>
     <meta charset="utf-8" />
     <title>Scenes Demo</title>
+    <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
-    
-    <style>
-      body, html{
-        height: 100%;
-        margin: 0px;
-      }
-      #app{
-        height: 100%;
-        width: 100%;
-      }
-      .scene{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #111111;
-        color: #eeeeee;
-        font-size: 30pt;
-        width: 100%;
-        height: 100%;
-      }
-      .display{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 40pt;
-      }
-      .mcAnswer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 10px;
-        font-size: 10pt;
-      }
-      .fixationcross {
-        font-size: 500px;
-      }
-    </style>
   </head>
   <body>
     <div id="app">
-
       <div class="scene">
         <!-- ID prompt-->
         <div class="UIDEntry" v-if="state=='ENTER_ID'">
-          <span>
-            Enter UID:
-          </span>
-          <input type="text" v-model="UID"></input>
-          <button @click="acceptID()">Submit</button>
+          <div>
+            <p>Enter UID:</p>
+            <input
+              type="text"
+              v-model="UID"
+              placeholder="UID"
+            />
+          </div>
+          <button @click="acceptID()" type="button">
+            Submit
+          </button>
         </div>
 
         <!-- stimulus display -->
-        <div class="stimulus" v-if="state=='INSTRUCT'">
-          <p v-for="line in instructions">
-            {{ line }}
-          </p>
-          <button @click="confirmInstructions()">Got it!</button>
+        <div class="instruction" v-if="state=='INSTRUCT'">
+          <p v-for="line in instructions">{{ line }}</p>
+          <button @click="confirmInstructions()">
+            Got it!
+          </button>
         </div>
 
         <div class="stimulus" v-if="state=='TRIAL'">
@@ -93,9 +62,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
             <span class="fixationcross"> + </span>
           </div>
 
-          <div class="audio" v-if="substate=='AUDIO'">
-            
-          </div>
+          <div class="audio" v-if="substate=='AUDIO'"></div>
 
           <!-- effort q-->
           <div class="sa" v-if="substate=='EF'">
@@ -103,37 +70,45 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
               How would you rate the difficulty of this trial?
             </span>
             <div>
-              <button class="efAnswer"
-                v-for="(text, ix) in efAnswers"
-                @click="efDone(text)">
-                {{text}}
-              </button>
+              <div class="efButtons">
+                <button
+                  class="efAnswer"
+                  type="button"
+                  v-for="(text, ix) in efAnswers"
+                  @click="efDone(text)">
+                  {{text}}
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- MC qs-->
           <div class="mc" v-if="substate=='MC'">
-            <span class="mcPrompt">
-              {{ mcPrompt }}
-            </span>
-            <button class="mcAnswer"
-              v-for="(text, ix) in mcChoices"
-              @click="mcDone(text)">
-              {{text}}
-            </button>
+            <span class="mcPrompt"> {{ mcPrompt }} </span>
+            <div class="mcButtons">
+              <button
+                class="mcAnswer"
+                v-for="(text, ix) in mcChoices"
+                @click="mcDone(text)">
+                {{text}}
+              </button>
+            </div>
           </div>
-
         </div>
 
         <div class="end" v-if="state=='END'">
-          <p> Thank you for participating in the experiment!</p>
+          <p>Thank you for participating in this experiment!
+            You may now retrieve the experimenter. 
+          </p>
+          <button @click="logScreen()"> Finish experiment</button>
         </div>
 
+        <div v-if="state=='LOG'">
+          <button @click="downloadLogTsv()"> Download Log </button>
+        </div>
       </div>
-
     </div>
 
-    <script src="app.js"> </script>
-   
+    <script src="app.js"></script>
   </body>
 </html>

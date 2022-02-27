@@ -1,0 +1,71 @@
+body,
+html {
+  height: 100%;
+  margin: 0px;
+}
+#app {
+  height: 100%;
+  width: 100%;
+}
+span,
+p {
+  font-size: 40px;
+}
+.instruction {
+    display: flex;
+    flex-direction: column;
+}
+.instruction button {
+    align-self: center;
+    margin-top: 5%;
+}
+.scene {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #111111;
+  color: #eeeeee;
+  width: 100%;
+  height: 100%;
+}
+.UIDEntry {
+  display: flex;
+  flex-direction: column;
+}
+.UIDEntry button {
+  margin-top: 20%;
+  align-self: center;
+}
+.display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40pt;
+}
+.efButtons {
+  display: flex;
+  flex-direction: row;
+  margin-top: 3%;
+}
+.efAnswer {
+  font-size: large;
+  margin-right: 7px;
+}
+.mcButtons {
+  margin-top: 3%;
+}
+.mcAnswer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  font-size: large;
+}
+.prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fixationcross {
+  font-size: 100px;
+}
