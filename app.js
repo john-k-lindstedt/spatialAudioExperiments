@@ -6,6 +6,125 @@ if (window.AudioContext === undefined) {
   actx.listener.setOrientation(0, 1, 0, 0, 0, 1);
 }
 
+class AudioNode {
+  constructor(file, angle){
+    this.file = file
+    this.angle = angle
+
+    this.panner = actx.createPanner()
+    this.panner.panningModel = "HRTF"
+    this.panner.distanceModel = "linear"
+  }
+
+  setCenterAudio() {
+    let targetX = 10 * Math.cos((-90 * Math.PI) / 180);
+    let targetY = 10 * Math.sin((-90 * Math.PI) / 180);
+    this.panner.setPosition(targetX, targetY, 0);
+    this.setUpAudio();
+  }
+
+  setLeftAudio() {
+    let targetX = 10 * Math.cos(((-this.angle - 90) * Math.PI) / 180);
+    let targetY = 10 * Math.sin(((-this.angle - 90) * Math.PI) / 180);
+    this.panner.setPosition(targetX, targetY, 0);  
+    this.setUpAudio();
+  }
+
+  setRightAudio() {
+    let targetX = 10 * Math.cos(((this.angle - 90) * Math.PI) / 180);
+    let targetY = 10 * Math.sin(((this.angle - 90) * Math.PI) / 180);
+    this.panner.setPosition(targetX, targetY, 0);  
+    this.setUpAudio();
+  }
+
+  setUpAudio() {
+    this.audio = new Audio(this.file);
+    this.audio.loop = true;
+    this.source = actx.createMediaElementSource(this.audio);
+    this.source.connect(this.panner);
+  }
+
+  playAudio() {
+    this.panner.connect(actx.destination);
+    this.audio.play();
+  }
+
+  stopAudio() {
+    this.audio.pause();
+    this.audio.currentTime = 0;
+  }
+}
+
+class TrialDemos {
+  constructor(app) {
+    const prompt1 = "audioFiles/prompts/id_alc.ogg"
+    const prompt2 = "audioFiles/prompts/id_emw.ogg"
+    const prompt3 = "audioFiles/prompts/id_jkl.ogg"
+
+    this.app = app
+
+    this.singleAudio = new AudioNode(prompt1, 0)
+    this.singleAudio.setCenterAudio();
+
+    this.overlappingAudio = new TrialDemo(prompt1, prompt2, prompt3, 0)
+
+    this.spreadOutAudio = new TrialDemo(prompt1, prompt2, prompt3, 90)
+  }
+
+  stopAll() {
+    this.singleAudio.stopAudio()
+    this.overlappingAudio.stopAll()
+    this.spreadOutAudio.stopAll()
+  }
+
+  playSingleAudio() {
+    this.singleAudio.playAudio()
+  }
+
+  playOverlappingAudio() {
+    this.overlappingAudio.playAll()
+  }
+
+  playSpreadOutAudio() {
+    this.spreadOutAudio.playAll()
+  }
+}
+
+class TrialDemo {
+  constructor(
+    prompt1File,
+    prompt2File,
+    prompt3File,
+    angle
+  ) {
+    this.centerFile = prompt1File
+    this.leftFile = prompt2File
+    this.rightFile = prompt3File
+    this.angle = angle
+
+    this.centerAudio = new AudioNode(this.centerFile, this.angle)
+    this.centerAudio.setCenterAudio()
+
+    this.leftAudio = new AudioNode(this.leftFile, this.angle)
+    this.leftAudio.setLeftAudio()
+
+    this.rightAudio = new AudioNode(this.rightFile, this.angle)
+    this.rightAudio.setRightAudio()
+  }
+
+  playAll() {
+    this.centerAudio.playAudio()
+    this.leftAudio.playAudio()
+    this.rightAudio.playAudio()
+  }
+
+  stopAll() {
+    this.centerAudio.stopAudio()
+    this.leftAudio.stopAudio()
+    this.rightAudio.stopAudio()
+  }
+}
+
 class Trial {
   constructor(
     trialID,
@@ -41,46 +160,16 @@ class Trial {
     this.promptSource = actx.createMediaElementSource(this.promptAudio);
 
     // setup target audio
-    this.targetPanner = actx.createPanner();
-    this.targetPanner.panningModel = "HRTF";
-    this.targetPanner.distanceModel = "linear";
-
-    this.targetX = 10 * Math.cos((-90 * Math.PI) / 180);
-    this.targetY = 10 * Math.sin((-90 * Math.PI) / 180);
-    this.targetPanner.setPosition(this.targetX, this.targetY, 0);
-
-    this.targetAudio = new Audio(targetFile);
-    this.targetAudio.loop = true;
-    this.targetSource = actx.createMediaElementSource(this.targetAudio);
-    this.targetSource.connect(this.targetPanner);
+    this.targetNode = new AudioNode(targetFile, angle)
+    this.targetNode.setCenterAudio()
 
     // setup left distractor audio
-    this.distLPanner = actx.createPanner();
-    this.distLPanner.panningModel = "HRTF";
-    this.distLPanner.distanceModel = "linear";
-
-    this.distLX = 10 * Math.cos(((-angle - 90) * Math.PI) / 180);
-    this.distLY = 10 * Math.sin(((-angle - 90) * Math.PI) / 180);
-    this.distLPanner.setPosition(this.distLX, this.distLY, 0);
-
-    this.distLAudio = new Audio(distLFile);
-    this.distLAudio.loop = true;
-    this.distLSource = actx.createMediaElementSource(this.distLAudio);
-    this.distLSource.connect(this.distLPanner);
+    this.distLNode = new AudioNode(distLFile, angle)
+    this.distLNode.setLeftAudio()   
 
     // setup right distractor audio
-    this.distRPanner = actx.createPanner();
-    this.distRPanner.panningModel = "HRTF";
-    this.distRPanner.distanceModel = "linear";
-
-    this.distRX = 10 * Math.cos(((angle - 90) * Math.PI) / 180);
-    this.distRY = 10 * Math.sin(((angle - 90) * Math.PI) / 180);
-    this.distRPanner.setPosition(this.distRX, this.distRY, 0);
-
-    this.distRAudio = new Audio(distRFile);
-    this.distRAudio.loop = true;
-    this.distRSource = actx.createMediaElementSource(this.distRAudio);
-    this.distRSource.connect(this.distRPanner);
+    this.distRNode = new AudioNode(distRFile, angle)
+    this.distRNode.setRightAudio()
 
     this.trialTimeSinceExperimentStarted = -1;
 
@@ -107,7 +196,6 @@ class Trial {
   }
 
   playPrompt() {
-    this.app.substate = "PROMPT";
     this.promptSource.connect(actx.destination);
 
     this.promptAudio.play();
@@ -127,31 +215,22 @@ class Trial {
   playTrial() {
     this.app.substate = "AUDIO";
 
-    this.targetPanner.connect(actx.destination);
-    this.distLPanner.connect(actx.destination);
-    this.distRPanner.connect(actx.destination);
-
-    this.targetAudio.play();
-    this.distLAudio.play();
-    this.distRAudio.play();
+    this.targetNode.playAudio()
+    this.distLNode.playAudio()
+    this.distRNode.playAudio()
 
     setTimeout(() => {
       this.stopAudio();
       //but ALSO for "advance to effortPrompt"
       this.efStartTime = new Date().getTime();
       this.app.substate = "EF";
-    }, this.timeout);
+    }, 1000);
   }
 
   stopAudio() {
-    this.targetAudio.pause();
-    this.targetAudio.currentTime = 0;
-
-    this.distLAudio.pause();
-    this.distLAudio.currentTime = 0;
-
-    this.distRAudio.pause();
-    this.distRAudio.currentTime = 0;
+    this.targetNode.stopAudio();
+    this.distLNode.stopAudio();
+    this.distRNode.stopAudio();
   }
 
   stopAll() {
@@ -163,7 +242,13 @@ class Trial {
   logTrial() {
     let log = [
       getDateLabel(),
-      this.trialID, 
+      this.app.UID, 
+      this.app.normal,
+      this.app.hearing_vision,
+      this.app.languages,
+      this.app.age,
+      this.app.gender_identity,
+      this.app.race,
       this.trialTimeSinceExperimentStarted, 
       this.angle,
       this.talkerId, 
@@ -189,15 +274,17 @@ function getDateLabel() {
   let dateLabel =
     date.getFullYear() +
     "-" +
-    date.getMonth() +
+    (date.getMonth() + 1) +
     "-" +
-    date.getDay() +
+    date.getDate() +
     "-" +
     date.getHours() +
     "-" +
     date.getMinutes() +
     "-" +
-    date.getSeconds();
+    date.getSeconds() +
+    "-" + 
+    date.getMilliseconds();
   return dateLabel
 }
 
@@ -205,12 +292,19 @@ app = new Vue({
   el: "#app",
   startTime: -1,
   data: {
-    state: "ENTER_ID",
+    state: "WELCOME",
     substate: "",
     trial_id: 0,
+    keyPressAvailable: false,
     trials: [],
+    demos: null,
     current_trial: null,
     UID: "",
+    languages: "",
+    age: null,
+    gender_identity: "",
+    race: "",
+    hearing_vision: null,
     UIDEntered: false,
     log: [],
     stimulus: "",
@@ -219,7 +313,7 @@ app = new Vue({
     efAnswers: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     mcChoices: [],
     instructions: [
-      "Try to listen closely to the audio in each trial to come.",
+      "Welcome to this study.",
       "Focus on the CENTER voice.",
       "After listening for a few seconds, we'll ask you some comprehension questions.",
     ],
@@ -227,6 +321,19 @@ app = new Vue({
 
   created() {
     this.startTime = new Date().getTime();
+
+    window.addEventListener('keydown', (e) => {
+      if (this.keyPressAvailable && e.ctrlKey) {
+        if (this.keyPressAvailable && e.key == 's') {
+          this.state = "TRIAL"
+          this.substate = ""
+          this.nextTrial();
+          this.keyPressAvailable = false
+        } else if (e.key == 'l') {
+          this.downloadLogTsv()
+        }
+      }
+    });
   },
 
   mounted() {
@@ -234,18 +341,56 @@ app = new Vue({
   },
 
   methods: {
+    welcomeProceed() {
+      this.state = "USER_INFO"
+    },
 
     // ----- STATE TRANSITIONS ---- //
-
-    acceptID() {
+    acceptInfo() {
       this.state = "INSTRUCT";
       this.setupLog();
+      console.log(this.hearing_vision)
     },
 
     confirmInstructions() {
-      // initiate the first trial in the list
-      this.state = "TRIAL";
-      this.nextTrial();
+      // start demo
+      this.state = "DEMO"
+      this.substate = "DEMO_START"
+    },
+
+    // ----- DEMOS ---- //
+    startDemo() {
+      this.demos = new TrialDemos()
+      this.substate = "DEMO_SINGLE"
+    },
+
+    singleAudioDemo(auto) {
+      this.demos.playSingleAudio()
+      this.stopDemo("DEMO_OVERLAP", auto)
+    },
+
+    overlappingAudioDemo(auto) {
+      this.demos.playOverlappingAudio()
+      this.stopDemo("DEMO_SPREAD_OUT", auto)
+    },
+
+    spreadoutAudioDemo(auto) {
+      this.demos.playSpreadOutAudio()
+      this.stopDemo("DEMO_EVERYTHING", auto)
+    },
+
+    stopDemo(newSubstate, auto) {
+      if (auto) this.substate = "DEMO_AUDIO"
+      setTimeout(() => {
+        this.demos.stopAll();
+        if (auto) this.substate = newSubstate
+      }, 2500);
+    },
+
+    finishDemo() {
+      this.state = "TRIAL"
+      this.substate = "START_STUDY"
+      this.keyPressAvailable = true
     },
 
     efDone(answer) {
@@ -259,6 +404,7 @@ app = new Vue({
     },
 
     mcDone(answer) {
+      this.substate = ''
       let time = new Date().getTime();
       this.current_trial.MCResponseTime = time - this.current_trial.MCStartTime;
       this.current_trial.MCTimeSinceExpStarted = time - this.startTime;
@@ -268,28 +414,36 @@ app = new Vue({
       this.nextTrial();
     },
 
-    logScreen() {
-      this.state = "LOG"
-    },
-
     // ----- STARTING TRIALS ---- //
 
-    nextTrial() {
-      if (this.trials.length > 59) {
-        this.trialNum += 1;
-        this.current_trial = this.trials.shift();
-        console.log(this.current_trial.targetFile);
+    padTrial() {
+      this.substate = "PROMPT";
+      setTimeout(() => {
         this.current_trial.trialTimeSinceExperimentStarted = new Date().getTime() - this.startTime;
         this.current_trial.startTrial();
+      }, 1000);
+    },
+
+    nextTrial() {
+      if (this.trials.length > 58) {
+        this.trialNum += 1;
+        this.current_trial = this.trials.shift();
+        if (this.trials.length % 20 == 0) {
+          this.substate = "BREAK" 
+        } else {
+          this.padTrial();
+        }
       } else {
         this.state = "END";
+        this.keyPressAvailable = true;
       }
     },
 
     // ----- SETTING UP LOG ---- //
 
     setupLog() {
-      header = ["timestamp", "trial_id", "trial_time_since_exp_start", "angle", 
+      header = ["timestamp", "UID", "normal_hearing_vision", "languages", "age", "gender_indentity", "race",
+      "trial_id", "trial_time_since_exp_start", "angle", 
       "target_talker_id", "target_file", "left_dist", "right_dist",  
       "ef_rate", "ef_reaction_time", "ef_time_since_exp_start", 
       "mc_choice", "mc_is_correct", "mc_correct_answer", "mc_reation_time", "mc_time_since_exp_start"]

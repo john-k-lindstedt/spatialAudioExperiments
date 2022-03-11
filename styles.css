@@ -68,4 +68,11 @@ p {
 }
 .fixationcross {
   font-size: 100px;
+  font-family: sans-serif;
+}
+label, input {
+  font-size: x-large;
+}
+.text_input{
+  width: 650px;
 }
