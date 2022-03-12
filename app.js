@@ -224,7 +224,7 @@ class Trial {
       //but ALSO for "advance to effortPrompt"
       this.efStartTime = new Date().getTime();
       this.app.substate = "EF";
-    }, 1000);
+    }, this.timeout);
   }
 
   stopAudio() {
@@ -425,7 +425,7 @@ app = new Vue({
     },
 
     nextTrial() {
-      if (this.trials.length > 58) {
+      if (this.trials.length > 0) {
         this.trialNum += 1;
         this.current_trial = this.trials.shift();
         if (this.trials.length % 20 == 0) {
