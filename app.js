@@ -310,8 +310,8 @@ app = new Vue({
     stimulus: "",
     mcPrompt: "",
     trialNum: 0,
-    efAnswers: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     mcChoices: [],
+    efAnswer: null,
     instructions: [
       "Welcome to this study.",
       "Focus on the CENTER voice.",
@@ -321,19 +321,25 @@ app = new Vue({
 
   created() {
     this.startTime = new Date().getTime();
-
-    window.addEventListener('keydown', (e) => {
-      if (this.keyPressAvailable && e.ctrlKey) {
-        if (this.keyPressAvailable && e.key == 's') {
+    
+      var keys = {};
+        
+      window.addEventListener('keydown', (e) => { 
+        keys[e.key] = true;
+        if (this.keyPressAvailable && keys['Control'] && keys['5'] && keys['p']) {
           this.state = "TRIAL"
           this.substate = ""
           this.nextTrial();
           this.keyPressAvailable = false
-        } else if (e.key == 'l') {
+        } else if (this.keyPressAvailable && keys['Control'] && keys['h'] && keys['7']) {
           this.downloadLogTsv()
         }
-      }
-    });
+      });
+    
+      window.addEventListener('keyup', (e) => {
+          keys[e.key] = false;
+      });
+    
   },
 
   mounted() {
@@ -393,11 +399,11 @@ app = new Vue({
       this.keyPressAvailable = true
     },
 
-    efDone(answer) {
+    efDone() {
       let time = new Date().getTime();
       this.current_trial.efResponseTime = time - this.current_trial.efStartTime;
       this.current_trial.efTimeSinceExpStarted = time - this.startTime;
-      this.current_trial.efReponse = answer;
+      this.current_trial.efReponse = this.efAnswer;
 
       this.current_trial.MCStartTime = new Date().getTime();
       this.substate = "MC";
@@ -411,6 +417,7 @@ app = new Vue({
       this.current_trial.MCResponse = answer;
 
       this.current_trial.logTrial();
+      this.efAnswer = null
       this.nextTrial();
     },
 
@@ -495,11 +502,11 @@ app = new Vue({
         target_audio_num = curr_data[2];
         distL_audio_num = curr_data[3];
         distR_audio_num = curr_data[4];
-        angle = curr_data[5];
-        duration = parseInt(curr_data[6]);
-        prompt_text = curr_data[7];
-        mc_correct = curr_data[8];
-        mc_choices = [curr_data[8], curr_data[9], curr_data[10], curr_data[11]];
+        angle = curr_data[6];
+        duration = parseInt(curr_data[7]);
+        prompt_text = curr_data[8];
+        mc_correct = curr_data[9];
+        mc_choices = [curr_data[9], curr_data[10], curr_data[11], curr_data[12]];
 
         // converting to audio files
         target_audio_file = this.getAudioFile(target_audio_num);
