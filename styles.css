@@ -47,6 +47,18 @@ p {
   flex-direction: row;
   margin-top: 3%;
 }
+.efButtons > form > ul > li {
+  list-style: none;
+}
+.efButton {
+  display: flex;
+  flex-direction: row;
+  padding-left: 0;
+}
+.efButton > li > input {
+  margin-left: 0;
+  margin-right: 10px;
+}
 .efAnswer {
   font-size: large;
   margin-right: 7px;
