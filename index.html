@@ -155,7 +155,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
           <!-- audio? -->
 
           <div class="audioDemo" v-if="substate=='START_STUDY'">
-            <p> Please retrieve your experimenter to start the study.</p> 
+            <p v-if="startExperiment==false"> Please retrieve your experimenter to start the study.</p> 
+            <p v-if="startExperiment==true"> You may now start the experiment </p>
+            <button v-if="startExperiment==true" @click="nextTrial()"> Start Experiment </button>
           </div>
 
           <div class="prompt" v-if="substate=='PROMPT'">

@@ -296,6 +296,7 @@ app = new Vue({
     substate: "",
     trial_id: 0,
     keyPressAvailable: false,
+    startExperiment: false,
     trials: [],
     demos: null,
     current_trial: null,
@@ -327,9 +328,7 @@ app = new Vue({
       window.addEventListener('keydown', (e) => { 
         keys[e.key] = true;
         if (this.keyPressAvailable && keys['Control'] && keys['5'] && keys['p']) {
-          this.state = "TRIAL"
-          this.substate = ""
-          this.nextTrial();
+          this.startExperiment = true
           this.keyPressAvailable = false
         } else if (this.keyPressAvailable && keys['Control'] && keys['h'] && keys['7']) {
           this.downloadLogTsv()
@@ -435,7 +434,8 @@ app = new Vue({
       if (this.trials.length > 0) {
         this.trialNum += 1;
         this.current_trial = this.trials.shift();
-        if (this.trials.length % 20 == 0) {
+        console.log(this.trials.length)
+        if (this.trials.length != 0 && this.trials.length % 20 == 0) {
           this.substate = "BREAK" 
         } else {
           this.padTrial();
