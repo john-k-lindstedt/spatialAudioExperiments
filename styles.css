@@ -2,23 +2,14 @@ body,
 html {
   height: 100%;
   margin: 0px;
+  background-color: #111111;
 }
+
 #app {
   height: 100%;
   width: 100%;
 }
-span,
-p {
-  font-size: 40px;
-}
-.instruction {
-    display: flex;
-    flex-direction: column;
-}
-.instruction button {
-    align-self: center;
-    margin-top: 5%;
-}
+
 .scene {
   display: flex;
   justify-content: center;
@@ -28,12 +19,51 @@ p {
   width: 100%;
   height: 100%;
 }
+
+.instruction, .audioDemo, .userInfo, .UIDEntry, .end {
+    display: flex;
+    flex-direction: column;
+    max-width: 90%;
+}
+
+.audioDemo > div{
+  display: flex;
+  flex-direction: column;
+}
+
+span, p {
+  font-size: 35px;
+}
+
+button{
+  font-size: 30px;
+  border-radius: 10px;
+  background-color: #111111;
+  background-image: linear-gradient(-5deg,#201040dd,#401050dd);
+  color: #eeeeee;
+  padding: 10px;
+  align-self: center;
+  margin-top: 5%;
+}
+
+.fixationcross {
+  align-self: center;
+}
+
+
+
+
+
+
+
+
+
 .UIDEntry {
   display: flex;
   flex-direction: column;
 }
 .UIDEntry button {
-  margin-top: 20%;
+  margin-top: 5%;
   align-self: center;
 }
 .display {

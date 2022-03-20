@@ -34,17 +34,21 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
       <div class="scene">
 
         <div class="userInfo" v-if="state=='WELCOME'">
-          <p> Welcome to the Spatial Audio Experiment! 
-            Please click the button below to proceed. 
+          <p><b>Welcome to the JKLab!</b></p>
+          <p>
+            And thanks for participating in our spatial audio experiment!
           </p>
-          <button @click="welcomeProceed()"> Proceed </button> 
+          <p>
+            Please click the button below to proceed.
+          </p>
+          <button @click="welcomeProceed()"> Proceed </button>
         </div>
 
-        <div class="userInfo" v-if="state=='USER_INFO'"> 
-          <p> Please enter the following information: </p>
+        <div class="userInfo" v-if="state=='USER_INFO'">
+          <p> First, please enter the following information: </p>
           <form>
             <div>
-              <label> UID: </label> <br>
+              <label> UID (ask experimenter):</label> <br>
               <input
                 type="text"
                 v-model="UID"
@@ -60,30 +64,30 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
             </div><br>
 
             <label> What language or languages did you speak in your home as a child? </label><br>
-            <input 
-              class="text_input" 
+            <input
+              class="text_input"
               type="text"
               v-model="languages"/>
             <br><br>
 
             <label> What is your age? </label><br>
-            <input 
-              class="text_input" 
-              type="number" 
+            <input
+              class="text_input"
+              type="number"
               v-model="age"/>
             <br><br>
 
             <label> What is your gender identity? </label><br>
-            <input 
-              class="text_input" 
-              type="text" 
+            <input
+              class="text_input"
+              type="text"
               v-model="gender_identity"/>
             <br><br>
 
             <label> What is your race and/or ethnicity? </label><br>
-            <input 
-              class="text_input" 
-              type="text" 
+            <input
+              class="text_input"
+              type="text"
               v-model="race"/>
             <br><br>
 
@@ -98,55 +102,51 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
         <!-- stimulus display -->
         <div class="instruction" v-if="state=='INSTRUCT'">
           <p> <b> Instructions </b> </p>
-          <p> Welcome to this study. <br><br>
-              In the coming trials, you will be asked to 
-              listen to three distinct voices.<br><br>
-              Focus on the CENTER voice. <br><br>
-              After listening, we will ask you some comprehension questions. 
-          </p>
+          <p> Your task today is to try to listen to and comprehend a <b>target</b> speaker's voice while <b>other</b> voices speak over them.</p>
+          <p> Sometimes the voices will sound spatially close to one another, other times they'll sound more spread out. The target voice will always be in the "center" of the audio space, but we'll also identify the speaker's voice before each trial.</p>
+          <p> After listening to each set of voices, you'll rate how hard you felt it was to focus on the target voice, and then answer a listening comprehension question.</p>
           <button @click="confirmInstructions()">
             Got it!
           </button>
         </div>
 
-        <div class="audioDemo" v-if="state=='DEMO'"> 
-          
-          <div class="audioDemo" v-if="substate=='DEMO_START'">
-            <p> In the following screens, we are going to play
-              three demos to help illustrate the study.
+        <div class="audioDemo" v-if="state=='DEMO'">
+
+          <div v-if="substate=='DEMO_START'">
+            <p> To start, we'll play some voice audio to help orient you to the listening task.
             </p>
-            <button @click="startDemo()"> Show me the demos </button>
+            <button @click="startDemo()"> Okay! </button>
           </div>
 
-          <div class="audioDemo" v-if="substate=='DEMO_AUDIO'">
+          <div v-if="substate=='DEMO_AUDIO'">
             <span class="fixationcross"> + </span>
           </div>
 
           <!-- single audio demo -->
-          <div class="audioDemo" v-if="substate=='DEMO_SINGLE'">
-            <p> Here is an example of one of the voices in this study.</p>
+          <div v-if="substate=='DEMO_SINGLE'">
+            <p> First, a single speaker on their own.</p>
             <button @click="singleAudioDemo(true)"> Listen </button>
           </div>
 
           <!-- overlapping audio demo -->
-          <div class="audioDemo" v-if="substate=='DEMO_OVERLAP'">
-            <p> Here's an example of multiple of those voices being played simultaenously. </p>
+          <div v-if="substate=='DEMO_OVERLAP'">
+            <p> Next, all three speakers at once. </p>
             <button @click="overlappingAudioDemo(true)"> Listen </button>
           </div>
 
           <!-- spreadout audio demo -->
-          <div class="audioDemo" v-if="substate=='DEMO_SPREAD_OUT'">
-            <p>And here's an example of those voices being spread out in 3D space.</p>
+          <div v-if="substate=='DEMO_SPREAD_OUT'">
+            <p>Finally, those same speakers spread out in audio space.</p>
             <button @click="spreadoutAudioDemo(true)"> Listen </button>
           </div>
 
-          <div class="audioDemo" v-if="substate=='DEMO_EVERYTHING'">
-            <p> Click any of these buttons to hear the examples again. </p>
-            <button @click="singleAudioDemo(false)"> One voice </button>
-            <button @click="overlappingAudioDemo(false)"> All voices overlapping. </button>
-            <button @click="spreadoutAudioDemo(false)">  All voices spread out. </button> <br> <br> 
-
-            <button @click="finishDemo()"> I'm done exploring.</button> 
+          <div v-if="substate=='DEMO_EVERYTHING'">
+            <p> Use these buttons if you'd like to hear the examples again. </p>
+            <button @click="singleAudioDemo(false)"> 1 voice </button>
+            <button @click="overlappingAudioDemo(false)"> 3 voices, together </button>
+            <button @click="spreadoutAudioDemo(false)">  3 voices, spread out </button> <br> <br>
+            <p> When you're ready to move on, click the button below. </p>
+            <button @click="finishDemo()"> I'm done exploring.</button>
           </div>
 
         </div>
@@ -155,8 +155,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
           <!-- audio? -->
 
           <div class="audioDemo" v-if="substate=='START_STUDY'">
-            <p v-if="startExperiment==false"> Please retrieve your experimenter to start the study.</p> 
-            <p v-if="startExperiment==true"> You may now start the experiment </p>
+            <p v-if="startExperiment==false"> Please retrieve your experimenter, and ask them any clarifying questions you may have.</p>
+            <p v-if="startExperiment==false"> When you're ready, the experimenter will begin the study.</p>
+            <p v-if="startExperiment==true"> Please click the button below to begin. </p>
             <button v-if="startExperiment==true" @click="nextTrial()"> Start Experiment </button>
           </div>
 
@@ -169,56 +170,59 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
           </div>
 
           <div class="audio" v-if="substate=='BREAK'">
-            <p> You can now take a short break. When you are ready to proceed, 
-                please click the button below. 
+            <p>
+              You're free to take a short break if you'd like.
+            </p>
+            <p>
+              When you are ready to proceed, please click the button below.
             </p>
             <button
-              @click="padTrial()"> 
-              Proceed 
-            </button> 
+              @click="padTrial()">
+              Proceed
+            </button>
           </div>
 
           <!-- effort q-->
           <div class="sa" v-if="substate=='EF'">
             <span class="efPrompt">
-              How difficult was it to focus on the target voice?
+              Rate your difficulty listening to the target voice:
             </span>
               <div class="efButtons">
                 <form>
                   <ul class="efButton">
                     <li>
-                      <input type="radio" value="1" v-model="efAnswer"> 
-                      <label>Very difficult</label> <br> 
+                      <input type="radio" value="1" v-model="efAnswer">
+                      <label>Very difficult</label> <br>
                       <label> 1 </label>
                     </li>
                     <li>
-                      <input type="radio" value="2" v-model="efAnswer"> 
-                      <label> Difficult</label> <br> 
+                      <input type="radio" value="2" v-model="efAnswer">
+                      <label> Difficult</label> <br>
                       <label> 2 </label>
                     </li>
                     <li>
-                      <input type="radio" value="3" v-model="efAnswer"> 
-                      <label>Somewhat difficult</label> <br> 
+                      <input type="radio" value="3" v-model="efAnswer">
+                      <label>Somewhat difficult</label> <br>
                       <label> 3 </label>
                     </li>
                     <li>
-                      <input type="radio" value="4" v-model="efAnswer"> 
-                      <label>Neutral</label> <br> 
+                      <input type="radio" value="4" v-model="efAnswer">
+                      <label>Neutral</label> <br>
                       <label> 4 </label>
                     </li>
                     <li>
-                      <input type="radio" value="5" v-model="efAnswer"> 
-                      <label>Somewhat easy</label> <br> 
+                      <input type="radio" value="5" v-model="efAnswer">
+                      <label>Somewhat easy</label> <br>
                       <label> 5 </label>
                     </li>
                     <li>
-                      <input type="radio" value="6" v-model="efAnswer"> 
-                      <label>Easy</label> <br> 
+                      <input type="radio" value="6" v-model="efAnswer">
+                      <label>Easy</label> <br>
                       <label> 6 </label>
                     </li>
                     <li>
-                      <input type="radio" value="7" v-model="efAnswer"> 
-                      <label>Very easy</label> <br> 
+                      <input type="radio" value="7" v-model="efAnswer">
+                      <label>Very easy</label> <br>
                       <label> 7 </label>
                     </li>
                   </ul>
@@ -242,8 +246,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
 
         <div class="end" v-if="state=='END'">
           <p>Thank you for participating in this experiment!
-            You may now retrieve the experimenter. 
           </p>
+          <p>You may now retrieve the experimenter.</p>
         </div>
 
       </div>
