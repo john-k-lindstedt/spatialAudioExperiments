@@ -327,7 +327,7 @@ app = new Vue({
         
       window.addEventListener('keydown', (e) => { 
         keys[e.key] = true;
-        if (this.keyPressAvailable && keys['Control'] && keys['5'] && keys['p']) {
+        if (this.keyPressAvailable && keys['j'] && keys['k'] && keys['l']) {
           this.startExperiment = true
           this.keyPressAvailable = false
         } else if (this.keyPressAvailable && keys['Control'] && keys['h'] && keys['7']) {
