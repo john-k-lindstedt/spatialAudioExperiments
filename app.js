@@ -7,9 +7,10 @@ if (window.AudioContext === undefined) {
 }
 
 class AudioNode {
-  constructor(file, angle){
+  constructor(file, angle, loop){
     this.file = file
     this.angle = angle
+    this.loop = loop
 
     this.panner = actx.createPanner()
     this.panner.panningModel = "HRTF"
@@ -39,7 +40,7 @@ class AudioNode {
 
   setUpAudio() {
     this.audio = new Audio(this.file);
-    this.audio.loop = true;
+    this.audio.loop = this.loop;
     this.source = actx.createMediaElementSource(this.audio);
     this.source.connect(this.panner);
   }
@@ -63,7 +64,7 @@ class TrialDemos {
 
     this.app = app
 
-    this.singleAudio = new AudioNode(prompt1, 0)
+    this.singleAudio = new AudioNode(prompt1, 0, false)
     this.singleAudio.setCenterAudio();
 
     this.overlappingAudio = new TrialDemo(prompt1, prompt2, prompt3, 0)
@@ -102,13 +103,13 @@ class TrialDemo {
     this.rightFile = prompt3File
     this.angle = angle
 
-    this.centerAudio = new AudioNode(this.centerFile, this.angle)
+    this.centerAudio = new AudioNode(this.centerFile, this.angle, false)
     this.centerAudio.setCenterAudio()
 
-    this.leftAudio = new AudioNode(this.leftFile, this.angle)
+    this.leftAudio = new AudioNode(this.leftFile, this.angle, false)
     this.leftAudio.setLeftAudio()
 
-    this.rightAudio = new AudioNode(this.rightFile, this.angle)
+    this.rightAudio = new AudioNode(this.rightFile, this.angle, false)
     this.rightAudio.setRightAudio()
   }
 
@@ -160,15 +161,15 @@ class Trial {
     this.promptSource = actx.createMediaElementSource(this.promptAudio);
 
     // setup target audio
-    this.targetNode = new AudioNode(targetFile, angle)
+    this.targetNode = new AudioNode(targetFile, angle, false)
     this.targetNode.setCenterAudio()
 
     // setup left distractor audio
-    this.distLNode = new AudioNode(distLFile, angle)
+    this.distLNode = new AudioNode(distLFile, angle, true)
     this.distLNode.setLeftAudio()   
 
     // setup right distractor audio
-    this.distRNode = new AudioNode(distRFile, angle)
+    this.distRNode = new AudioNode(distRFile, angle, true)
     this.distRNode.setRightAudio()
 
     this.trialTimeSinceExperimentStarted = -1;
@@ -348,6 +349,7 @@ app = new Vue({
   methods: {
     welcomeProceed() {
       this.state = "USER_INFO"
+      actx.resume();
     },
 
     // ----- STATE TRANSITIONS ---- //
@@ -370,16 +372,19 @@ app = new Vue({
     },
 
     singleAudioDemo(auto) {
+      this.demos.stopAll()
       this.demos.playSingleAudio()
       this.stopDemo("DEMO_OVERLAP", auto)
     },
 
     overlappingAudioDemo(auto) {
+      this.demos.stopAll()
       this.demos.playOverlappingAudio()
       this.stopDemo("DEMO_SPREAD_OUT", auto)
     },
 
     spreadoutAudioDemo(auto) {
+      this.demos.stopAll()
       this.demos.playSpreadOutAudio()
       this.stopDemo("DEMO_EVERYTHING", auto)
     },
@@ -387,7 +392,7 @@ app = new Vue({
     stopDemo(newSubstate, auto) {
       if (auto) this.substate = "DEMO_AUDIO"
       setTimeout(() => {
-        this.demos.stopAll();
+        //this.demos.stopAll();
         if (auto) this.substate = newSubstate
       }, 2500);
     },
