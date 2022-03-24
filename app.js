@@ -14,7 +14,7 @@ class AudioNode {
 
     this.panner = actx.createPanner()
     this.panner.panningModel = "HRTF"
-    this.panner.distanceModel = "linear"
+    this.panner.distanceModel = "inverse"
   }
 
   setCenterAudio() {
@@ -350,6 +350,10 @@ app = new Vue({
     welcomeProceed() {
       this.state = "USER_INFO"
       actx.resume();
+      for(t of this.trials){
+        t.timeout = parseInt(t.targetNode.audio.duration * 1000)
+        console.log(t.timeout)
+      }
     },
 
     // ----- STATE TRANSITIONS ---- //
