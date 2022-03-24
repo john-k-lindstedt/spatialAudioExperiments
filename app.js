@@ -156,9 +156,8 @@ class Trial {
     this.app = app;
 
     // set up prompt audio
-    this.promptAudio = new Audio(promptFile);
-    this.promptAudio.loop = true;
-    this.promptSource = actx.createMediaElementSource(this.promptAudio);
+    this.promptNode = new AudioNode(promptFile, 0, false);
+    this.promptNode.setCenterAudio()
 
     // setup target audio
     this.targetNode = new AudioNode(targetFile, angle, false)
@@ -197,9 +196,7 @@ class Trial {
   }
 
   playPrompt() {
-    this.promptSource.connect(actx.destination);
-
-    this.promptAudio.play();
+    this.promptNode.playAudio();
 
     //when should I disconnect...?
     setTimeout(() => {
@@ -208,8 +205,7 @@ class Trial {
   }
 
   stopPrompt() {
-    this.promptAudio.pause();
-    this.promptAudio.currentTime = 0;
+    this.promptNode.stopAudio();
     this.playTrial();
   }
 
