@@ -135,7 +135,7 @@ label, input {
   justify-content: center;
 }
 
-label, p{
+label, p, button, .fixationcross{
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
      -khtml-user-select: none; /* Konqueror HTML */
