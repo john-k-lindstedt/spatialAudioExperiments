@@ -27,14 +27,14 @@ class AudioNode {
   setLeftAudio() {
     let targetX = 10 * Math.cos(((-this.angle - 90) * Math.PI) / 180);
     let targetY = 10 * Math.sin(((-this.angle - 90) * Math.PI) / 180);
-    this.panner.setPosition(targetX, targetY, 0);  
+    this.panner.setPosition(targetX, targetY, 0);
     this.setUpAudio();
   }
 
   setRightAudio() {
     let targetX = 10 * Math.cos(((this.angle - 90) * Math.PI) / 180);
     let targetY = 10 * Math.sin(((this.angle - 90) * Math.PI) / 180);
-    this.panner.setPosition(targetX, targetY, 0);  
+    this.panner.setPosition(targetX, targetY, 0);
     this.setUpAudio();
   }
 
@@ -165,7 +165,7 @@ class Trial {
 
     // setup left distractor audio
     this.distLNode = new AudioNode(distLFile, angle, true)
-    this.distLNode.setLeftAudio()   
+    this.distLNode.setLeftAudio()
 
     // setup right distractor audio
     this.distRNode = new AudioNode(distRFile, angle, true)
@@ -239,21 +239,21 @@ class Trial {
   logTrial() {
     let log = [
       getDateLabel(),
-      this.app.UID, 
+      this.app.UID,
       this.app.normal,
       this.app.hearing_vision,
       this.app.languages,
       this.app.age,
       this.app.gender_identity,
       this.app.race,
-      this.trialTimeSinceExperimentStarted, 
+      this.trialTimeSinceExperimentStarted,
       this.angle,
-      this.talkerId, 
-      this.targetFile, 
-      this.distLFile, 
-      this.distRFile, 
+      this.talkerId,
+      this.targetFile,
+      this.distLFile,
+      this.distRFile,
       this.efReponse,
-      this.efResponseTime, 
+      this.efResponseTime,
       this.efTimeSinceExpStarted,
       this.MCResponse,
       this.MCResponse === this.MCCorrect,
@@ -280,7 +280,7 @@ function getDateLabel() {
     date.getMinutes() +
     "-" +
     date.getSeconds() +
-    "-" + 
+    "-" +
     date.getMilliseconds();
   return dateLabel
 }
@@ -319,10 +319,10 @@ app = new Vue({
 
   created() {
     this.startTime = new Date().getTime();
-    
+
       var keys = {};
-        
-      window.addEventListener('keydown', (e) => { 
+
+      window.addEventListener('keydown', (e) => {
         keys[e.key] = true;
         if (this.substate == "START_STUDY" && this.keyPressAvailable && keys['j'] && keys['k'] && keys['l']) {
           this.startExperiment = true
@@ -331,11 +331,11 @@ app = new Vue({
           this.downloadLogTsv()
         }
       });
-    
+
       window.addEventListener('keyup', (e) => {
           keys[e.key] = false;
       });
-    
+
   },
 
   mounted() {
@@ -439,9 +439,10 @@ app = new Vue({
       if (this.trials.length > 0) {
         this.trialNum += 1;
         this.current_trial = this.trials.shift();
-        console.log(this.trials.length)
+        console.log(this.trials.length, this.current_trial.trialID, this.current_trial.angle)
+        console.log(this.current_trial)
         if (this.trials.length != 0 && this.trials.length % 20 == 0) {
-          this.substate = "BREAK" 
+          this.substate = "BREAK"
         } else {
           this.padTrial();
         }
@@ -455,9 +456,9 @@ app = new Vue({
 
     setupLog() {
       header = ["timestamp", "UID", "normal_hearing_vision", "languages", "age", "gender_indentity", "race",
-      "trial_id", "trial_time_since_exp_start", "angle", 
-      "target_talker_id", "target_file", "left_dist", "right_dist",  
-      "ef_rate", "ef_reaction_time", "ef_time_since_exp_start", 
+      "trial_id", "trial_time_since_exp_start", "angle",
+      "target_talker_id", "target_file", "left_dist", "right_dist",
+      "ef_rate", "ef_reaction_time", "ef_time_since_exp_start",
       "mc_choice", "mc_is_correct", "mc_correct_answer", "mc_reation_time", "mc_time_since_exp_start"]
       this.log.push(header)
       window.localStorage.setItem("log", JSON.stringify(this.log));

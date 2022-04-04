@@ -48,13 +48,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
         <div class="userInfo" v-if="state=='USER_INFO'">
           <p> First, please enter the following information: </p>
           <form>
-            <div>
-              <label> UID (ask experimenter):</label> <br>
-              <input
-                type="text"
-                v-model="UID"
-              />
-            </div> <br>
+
 
             <div>
               <label> Do you have normal or corrected-to-normal hearing and vision? </label> <br>
@@ -92,9 +86,17 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
               v-model="race"/>
             <br><br>
 
+            <div>
+              <label> UID (ask experimenter):</label> <br>
+              <input
+                type="text"
+                v-model="UID"
+              />
+            </div> <br>
+
           </form> <br><br>
 
-          <button @click="acceptInfo()" type="button">
+          <button @click="acceptInfo()" :disabled="UID == ''" type="button">
             Submit
           </button>
 
@@ -218,18 +220,19 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
                     <li>
                       <label>5</label>
                       <input type="radio" value="5" v-model="efAnswer"></input>
-                      <label></label> 
+                      <label></label>
                     </li>
                     <li>
                       <label>6</label>
                       <input type="radio" value="6" v-model="efAnswer"></input>
-                      <label></label> 
+                      <label></label>
                     </li>
                     <li>
                       <label>7</label>
                       <input type="radio" value="7" v-model="efAnswer"></input>
                       <label></label>
                     </li>
+                    <!--
                     <li>
                       <label>8</label>
                       <input type="radio" value="8" v-model="efAnswer"></input>
@@ -245,13 +248,14 @@ https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
                       <input type="radio" value="10" v-model="efAnswer"></input>
                       <label></label>
                     </li>
+                    -->
                     <li style="width: 100px; margin: 0 20px">
                       <label>extremely</label>
                       <label>difficult</label>
                     </li>
                   </ul>
               </div>
-              <button @click="efDone()"> Submit </button>
+              <button @click="efDone()" :disabled="efAnswer == null"> Submit </button>
           </div>
 
           <!-- MC qs-->
