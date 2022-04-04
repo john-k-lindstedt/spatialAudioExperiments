@@ -160,15 +160,15 @@ class Trial {
     this.promptNode.setCenterAudio()
 
     // setup target audio
-    this.targetNode = new AudioNode(targetFile, angle, false)
+    this.targetNode = new AudioNode("audioFiles/" + targetFile, angle, false)
     this.targetNode.setCenterAudio()
 
     // setup left distractor audio
-    this.distLNode = new AudioNode(distLFile, angle, true)
+    this.distLNode = new AudioNode("audioFiles/" + distLFile, angle, true)
     this.distLNode.setLeftAudio()
 
     // setup right distractor audio
-    this.distRNode = new AudioNode(distRFile, angle, true)
+    this.distRNode = new AudioNode("audioFiles/" + distRFile, angle, true)
     this.distRNode.setRightAudio()
 
     this.trialTimeSinceExperimentStarted = -1;
@@ -240,12 +240,12 @@ class Trial {
     let log = [
       getDateLabel(),
       this.app.UID,
-      this.app.normal,
       this.app.hearing_vision,
       this.app.languages,
       this.app.age,
       this.app.gender_identity,
       this.app.race,
+      this.trialID,
       this.trialTimeSinceExperimentStarted,
       this.angle,
       this.talkerId,
@@ -271,9 +271,9 @@ function getDateLabel() {
   let dateLabel =
     date.getFullYear() +
     "-" +
-    (date.getMonth() + 1) +
+    (date.getMonth() + 1).toString().padStart(2,"0") +
     "-" +
-    date.getDate() +
+    date.getDate().toString().padStart(2,"0") +
     "-" +
     date.getHours() +
     "-" +
@@ -492,9 +492,11 @@ app = new Vue({
       var x = data.split("\n");
       for (var i = 0; i < x.length; i++) {
         y = x[i].split("\t");
+        for (var j = 0; j < y.length; j++) {
+          y[j] = y[j].trim()
+        }
         x[i] = y;
       }
-      console.log(x);
       this.buildTrials(x);
     },
 
@@ -566,7 +568,7 @@ app = new Vue({
       let num_string = audio_num.substring(1);
       let num_int = parseInt(num_string);
 
-      let audio_file = "audioFiles/" + audio_num;
+      let audio_file = audio_num;
 
       if (num_int <= 20) {
         audio_file += "_jkl.ogg";
